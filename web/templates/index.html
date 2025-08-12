@@ -1,0 +1,46 @@
+{{define "content"}}
+<h1>Welcome</h1>
+
+{{if .User}}
+  <p>Hello, <strong>{{.User.Username}}</strong>!</p>
+  <p><a href="/posts/new">Create a new post</a></p>
+  <form method="post" action="/logout"><button>Logout</button></form>
+{{else}}
+  <p><a href="/register">Register</a> or <a href="/login">Login</a></p>
+{{end}}
+
+<h2>Filter</h2>
+<form method="get" action="/" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+  <label>Category:
+    <select name="cat">
+      <option value="">(all)</option>
+      {{range .Categories}}
+        <option value="{{.ID}}" {{if eq $.FilterCat (printf "%d" .ID)}}selected{{end}}>{{.Name}}</option>
+      {{end}}
+    </select>
+  </label>
+
+  {{if .User}}
+    <label><input type="checkbox" name="mine" value="1" {{if .FilterMine}}checked{{end}}> My posts</label>
+    <label><input type="checkbox" name="liked" value="1" {{if .FilterLiked}}checked{{end}}> Liked by me</label>
+  {{end}}
+
+  <button type="submit">Apply</button>
+  <a href="/">Reset</a>
+</form>
+
+<h2>Latest posts</h2>
+{{if .Posts}}
+  <ul>
+    {{range .Posts}}
+      <li>
+        <a href="/post?id={{.ID}}">{{.Title}}</a>
+        — by {{.Username}} <small>({{.CreatedAt}})</small>
+        {{if .Cats}} <br><small>Categories: {{.Cats}}</small>{{end}}
+      </li>
+    {{end}}
+  </ul>
+{{else}}
+  <p>No posts yet.</p>
+{{end}}
+{{end}}

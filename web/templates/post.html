@@ -1,0 +1,104 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{.Title}} - Literary Lions</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+  <header style="display:flex;gap:16px;align-items:center">
+    <strong>🦁 Literary Lions</strong>
+    <a href="/">Home</a>
+
+    {{if .User}}
+      <a href="/posts/new">New Post</a>
+      <form method="post" action="/logout" style="margin-left:auto">
+        <button>Logout ({{.User.Username}})</button>
+      </form>
+    {{else}}
+      <span style="margin-left:auto">
+        <a href="/login">Login</a> · <a href="/register">Register</a>
+      </span>
+    {{end}}
+  </header>
+
+  <main>
+    <article>
+      <h1>{{.Post.Title}}</h1>
+      <p><em>by {{.Post.Username}} — {{.Post.CreatedAt}}</em></p>
+
+      {{if .PostCategories}}
+        <p>Categories:
+          {{range $i, $c := .PostCategories}}{{if $i}}, {{end}}{{$c}}{{end}}
+        </p>
+      {{end}}
+
+      <p style="white-space: pre-wrap;">{{.Post.Content}}</p>
+
+      <!-- A: POST like/dislike buttons (or read-only counts when logged out) -->
+      {{if .User}}
+        <form method="post" action="/react" style="display:inline">
+          <input type="hidden" name="kind" value="post">
+          <input type="hidden" name="id" value="{{.Post.ID}}">
+          <input type="hidden" name="v" value="1">
+          <button type="submit">Like ({{.PostLikes}})</button>
+        </form>
+        <form method="post" action="/react" style="display:inline">
+          <input type="hidden" name="kind" value="post">
+          <input type="hidden" name="id" value="{{.Post.ID}}">
+          <input type="hidden" name="v" value="-1">
+          <button type="submit">Dislike ({{.PostDislikes}})</button>
+        </form>
+      {{else}}
+        <p>Likes: {{.PostLikes}} · Dislikes: {{.PostDislikes}}</p>
+      {{end}}
+    </article>
+
+    <hr>
+
+    <h2>Comments</h2>
+    {{if .Comments}}
+      <ul>
+        {{range .Comments}}
+          <li style="margin-bottom:8px">
+            <strong>{{.Username}}</strong>:
+            <span style="white-space: pre-wrap;">{{.Content}}</span>
+            <small> — {{.CreatedAt}}</small>
+
+            <!-- B: COMMENT like/dislike buttons (or read-only counts when logged out) -->
+            {{if $.User}}
+              <form method="post" action="/react" style="display:inline; margin-left:8px">
+                <input type="hidden" name="kind" value="comment">
+                <input type="hidden" name="id" value="{{.ID}}">
+                <input type="hidden" name="v" value="1">
+                <button type="submit">Like ({{.Likes}})</button>
+              </form>
+              <form method="post" action="/react" style="display:inline">
+                <input type="hidden" name="kind" value="comment">
+                <input type="hidden" name="id" value="{{.ID}}">
+                <input type="hidden" name="v" value="-1">
+                <button type="submit">Dislike ({{.Dislikes}})</button>
+              </form>
+            {{else}}
+              <span style="margin-left:8px">Likes: {{.Likes}} · Dislikes: {{.Dislikes}}</span>
+            {{end}}
+          </li>
+        {{end}}
+      </ul>
+    {{else}}
+      <p>No comments yet.</p>
+    {{end}}
+
+    {{if .User}}
+      <h3>Add a comment</h3>
+      <form method="post" action="/comment">
+        <input type="hidden" name="post_id" value="{{.Post.ID}}">
+        <textarea name="content" rows="4" cols="60" required></textarea><br><br>
+        <button type="submit">Comment</button>
+      </form>
+    {{else}}
+      <p><a href="/login">Login</a> to comment.</p>
+    {{end}}
+  </main>
+</body>
+</html>

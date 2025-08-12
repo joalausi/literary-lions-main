@@ -1,0 +1,5 @@
+.git
+forum.db
+**/*.DS_Store
+**/*.swp
+**/*.tmp

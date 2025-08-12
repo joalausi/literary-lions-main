@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/assets/css/style.css">
+</head>
+<body>
+  <header style="display:flex;gap:16px;align-items:center">
+    <strong>🦁 Literary Lions</strong>
+    <a href="/">Home</a>
+
+    {{if .User}}
+      <a href="/posts/new">New Post</a>
+      <!-- logout is POST for safety -->
+      <form method="post" action="/logout" style="margin-left:auto">
+        <button>Logout ({{.User.Username}})</button>
+      </form>
+    {{else}}
+      <span style="margin-left:auto">
+        <a href="/login">Login</a> · <a href="/register">Register</a>
+      </span>
+    {{end}}
+  </header>
+
+  <main>
+    {{block "content" .}}{{end}}
+  </main>
+</body>
+</html>

@@ -1,0 +1,14 @@
+# binaries & temp
+/forum.db
+/bin/
+/dist/
+/tmp/
+*.log
+
+# editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
