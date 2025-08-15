@@ -1,46 +1,48 @@
+{{define "index.html"}}
+{{template "base.html" .}}
+{{end}}
+
 {{define "content"}}
-<h1>Welcome</h1>
+  <div class="card">
+    <form method="get" action="/" class="grid">
+      <div class="row">
+        <label for="cat">Filter by category</label>
+        <select id="cat" name="cat">
+          <option value="">-- All --</option>
+          {{range .Categories}}
+            <option value="{{.ID}}" {{if eq (printf "%d" .ID) $.FilterCat}}selected{{end}}>{{.Name}}</option>
+          {{end}}
+        </select>
+      </div>
+      <div class="row actions">
+        <label><input type="checkbox" name="mine" value="1" {{if .FilterMine}}checked{{end}}> My posts</label>
+        <label><input type="checkbox" name="liked" value="1" {{if .FilterLiked}}checked{{end}}> Liked by me</label>
+        <button class="btn primary" type="submit">Apply</button>
+        <a class="btn" href="/">Reset</a>
+      </div>
+    </form>
+  </div>
 
-{{if .User}}
-  <p>Hello, <strong>{{.User.Username}}</strong>!</p>
-  <p><a href="/posts/new">Create a new post</a></p>
-  <form method="post" action="/logout"><button>Logout</button></form>
-{{else}}
-  <p><a href="/register">Register</a> or <a href="/login">Login</a></p>
-{{end}}
+  <div class="spacer"></div>
 
-<h2>Filter</h2>
-<form method="get" action="/" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-  <label>Category:
-    <select name="cat">
-      <option value="">(all)</option>
-      {{range .Categories}}
-        <option value="{{.ID}}" {{if eq $.FilterCat (printf "%d" .ID)}}selected{{end}}>{{.Name}}</option>
+  <div class="grid">
+    {{if .Posts}}
+      {{range .Posts}}
+        <article class="card">
+          <header class="row" style="justify-content:space-between">
+            <h2 style="margin:0"><a href="/post?id={{.ID}}">{{.Title}}</a></h2>
+            <span class="muted">{{.CreatedAt}} · by {{.Username}}</span>
+          </header>
+          {{if .Cats}}
+            <div class="muted">Categories: {{.Cats}}</div>
+          {{end}}
+          <div class="actions">
+            <a class="btn" href="/post?id={{.ID}}">Open</a>
+          </div>
+        </article>
       {{end}}
-    </select>
-  </label>
-
-  {{if .User}}
-    <label><input type="checkbox" name="mine" value="1" {{if .FilterMine}}checked{{end}}> My posts</label>
-    <label><input type="checkbox" name="liked" value="1" {{if .FilterLiked}}checked{{end}}> Liked by me</label>
-  {{end}}
-
-  <button type="submit">Apply</button>
-  <a href="/">Reset</a>
-</form>
-
-<h2>Latest posts</h2>
-{{if .Posts}}
-  <ul>
-    {{range .Posts}}
-      <li>
-        <a href="/post?id={{.ID}}">{{.Title}}</a>
-        — by {{.Username}} <small>({{.CreatedAt}})</small>
-        {{if .Cats}} <br><small>Categories: {{.Cats}}</small>{{end}}
-      </li>
+    {{else}}
+      <div class="card">No posts yet. Be the first to <a href="/posts/new">create one</a>!</div>
     {{end}}
-  </ul>
-{{else}}
-  <p>No posts yet.</p>
-{{end}}
+  </div>
 {{end}}

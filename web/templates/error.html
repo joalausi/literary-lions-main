@@ -1,20 +1,20 @@
-<!doctype html>
-<html>
+{{define "error.html"}}
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{.Title}}</title>
-  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/style.css" />
 </head>
 <body>
-  <header style="display:flex;gap:16px;align-items:center">
-    <strong>🦁 Literary Lions</strong>
-    <a href="/">Home</a>
-  </header>
-
-  <main>
-    <h1>{{.Status}} — {{.Title}}</h1>
-    <p>{{.Message}}</p>
-    <p><a href="/">Go back home</a></p>
+  <main class="container" style="padding:32px">
+    <div class="card" style="text-align:center">
+      <h1 style="margin-top:0">{{.Status}} — {{.Title}}</h1>
+      <p class="muted">{{.Message}}</p>
+      <p><a class="btn" href="/">Go back home</a></p>
+    </div>
   </main>
 </body>
 </html>
+{{end}}

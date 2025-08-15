@@ -1,0 +1,23 @@
+{{define "category.html"}}
+{{template "base.html" .}}
+{{end}}
+
+{{define "content"}}
+  <div class="card">
+    <h1>Category: {{.CategoryName}}</h1>
+    {{if .Posts}}
+      <div class="grid">
+        {{range .Posts}}
+          <article class="card">
+            <header class="row" style="justify-content:space-between">
+              <h2 style="margin:0"><a href="/post?id={{.ID}}">{{.Title}}</a></h2>
+              <span class="muted">{{.CreatedAt}} · by {{.Username}}</span>
+            </header>
+          </article>
+        {{end}}
+      </div>
+    {{else}}
+      <p class="muted">No posts in this category yet.</p>
+    {{end}}
+  </div>
+{{end}}
