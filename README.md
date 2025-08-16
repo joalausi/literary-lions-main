@@ -59,9 +59,8 @@ Literary Lions Forum is an online discussion platform where users can:
 - ✅ **Dockerized** build & run
 
 
----
+## Project Structure
 
-## 📁 File Structure
 
 ```bash
 ├─ cmd/
@@ -90,33 +89,3 @@ Literary Lions Forum is an online discussion platform where users can:
 ├─ .gitignore
 ├─ go.mod
 └─ go.sum
-
-## 🚀 How to Run
-
-🚀 Run Locally
-
-# from project root
-go run ./cmd/forumd
-# app -> http://localhost:8080
-
-🚀 Environment
-
-    PORT=8080 DB_PATH=forum.db go run ./cmd/forumd
-
-🐳 Run with Docker
-
-docker build -t literary-lions:0.1 .
-
-🐳 quick run (ephemeral DB inside container)
-
-docker run --name ll-forum -d \
-  -p 8080:8080 \
-  -e DB_PATH=/app/forum.db \
-  --label com.kood.project="literary-lions" \
-  literary-lions:0.1
-
-🗄️ Database / ERD  
-
-The app bootstraps tables for:
-users, sessions, posts, comments, categories, post_categories, post_reactions, comment_reactions.
-
