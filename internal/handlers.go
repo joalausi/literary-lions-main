@@ -139,6 +139,13 @@ func (a *App) DBCheck(w http.ResponseWriter, r *http.Request) {
 // RegisterGET — GET /register
 // Shows the registration form.
 func (a *App) RegisterGET(w http.ResponseWriter, r *http.Request) {
+	// Check if user is already logged in
+	u, _ := a.currentUser(r)
+	if u != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	
 	if err := a.tpl.ExecuteTemplate(w, "register.html", nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
@@ -188,6 +195,13 @@ func (a *App) RegisterPOST(w http.ResponseWriter, r *http.Request) {
 // LoginGET — GET /login
 // Shows the login form.
 func (a *App) LoginGET(w http.ResponseWriter, r *http.Request) {
+	// Check if user is already logged in
+	u, _ := a.currentUser(r)
+	if u != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	
 	if err := a.tpl.ExecuteTemplate(w, "login.html", nil); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
