@@ -1,0 +1,93 @@
+{{define "post.html"}}
+{{template "base.html" .}}
+{{end}}
+
+{{define "content"}}
+  <article class="grid">
+    <div class="card">
+      <header class="row" style="justify-content:space-between">
+        <h1 style="margin:0">{{.Post.Title}}</h1>
+        <span class="muted">{{.Post.CreatedAt}} · by {{.Post.Username}}</span>
+      </header>
+
+      {{if .PostCategories}}
+        <p class="muted">Categories:
+          {{range $i, $c := .PostCategories}}{{if $i}}, {{end}}{{$c}}{{end}}
+        </p>
+      {{end}}
+
+      <div style="white-space:pre-wrap;line-height:1.6">{{.Post.Content}}</div>
+
+      <div class="spacer"></div>
+      <div class="actions">
+        {{if .User}}
+          <form class="inline" action="/react" method="post">
+            <input type="hidden" name="kind" value="post" />
+            <input type="hidden" name="id" value="{{.Post.ID}}" />
+            <input type="hidden" name="v" value="1" />
+            <button class="btn" type="submit">👍 Like ({{.PostLikes}})</button>
+          </form>
+          <form class="inline" action="/react" method="post">
+            <input type="hidden" name="kind" value="post" />
+            <input type="hidden" name="id" value="{{.Post.ID}}" />
+            <input type="hidden" name="v" value="-1" />
+            <button class="btn" type="submit">👎 Dislike ({{.PostDislikes}})</button>
+          </form>
+        {{else}}
+          <span class="muted">Log in to like or comment.</span>
+        {{end}}
+      </div>
+    </div>
+
+    <section class="card">
+      <h2 style="margin-top:0">Comments</h2>
+      {{if .Comments}}
+        <div class="grid">
+          {{range .Comments}}
+            <div class="card">
+              <div class="row" style="justify-content:space-between">
+                <strong>{{.Username}}</strong>
+                <span class="muted">{{.CreatedAt}}</span>
+              </div>
+              <div style="white-space:pre-wrap;line-height:1.6">{{.Content}}</div>
+              <div class="actions">
+                {{if $.User}}
+                  <form class="inline" action="/react" method="post">
+                    <input type="hidden" name="kind" value="comment" />
+                    <input type="hidden" name="id" value="{{.ID}}" />
+                    <input type="hidden" name="v" value="1" />
+                    <button class="btn" type="submit">👍 ({{.Likes}})</button>
+                  </form>
+                  <form class="inline" action="/react" method="post">
+                    <input type="hidden" name="kind" value="comment" />
+                    <input type="hidden" name="id" value="{{.ID}}" />
+                    <input type="hidden" name="v" value="-1" />
+                    <button class="btn" type="submit">👎 ({{.Dislikes}})</button>
+                  </form>
+                {{else}}
+                  <span class="muted">Log in to react.</span>
+                {{end}}
+              </div>
+            </div>
+          {{end}}
+        </div>
+      {{else}}
+        <p class="muted">No comments yet.</p>
+      {{end}}
+
+      {{if .User}}
+        <div class="spacer"></div>
+        <form method="post" action="/comment" class="grid">
+          <input type="hidden" name="post_id" value="{{.Post.ID}}" />
+          <div>
+            <label for="content">Add a comment</label>
+            <textarea id="content" name="content" rows="4" required></textarea>
+          </div>
+          <div class="actions">
+            <button class="btn primary" type="submit">Comment</button>
+          </div>
+        </form>
+      {{end}}
+    </section>
+  </article>
+{{end}}
