@@ -1,6 +1,6 @@
 # 🦁 Literary Lions Forum
 
-A lightweight book-club forum built with **Go** and **SQLite**.
+Literary Lions Forum is a web-based discussion platform designed specifically for book enthusiasts. Members can create posts, engage in discussions, share book covers and reading moments through images, and connect with fellow literary lions in organized categories.
 
 ---
 
