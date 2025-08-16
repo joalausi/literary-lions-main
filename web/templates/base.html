@@ -1,30 +1,70 @@
-<!doctype html>
-<html>
+{{define "base.html"}}
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{{.Title}}</title>
-  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="stylesheet" href="/assets/style.css" />
+  <style>
+    /* Minimal, friendly defaults in case styles.css is missing */
+    :root { --bg:#0b1020; --panel:#141b34; --muted:#8ea0c6; --text:#e8eeff; --brand:#7aa2ff; --accent:#9fd5a6; --danger:#ff8a8a; }
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,Arial,"Apple Color Emoji","Segoe UI Emoji";}
+    a{color:var(--brand);text-decoration:none} a:hover{text-decoration:underline}
+    .container{max-width:960px;margin:0 auto;padding:16px}
+    header{position:sticky;top:0;backdrop-filter:saturate(120%) blur(8px);background:rgba(11,16,32,.7);border-bottom:1px solid #202848;z-index:10}
+    .nav{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .nav a.brand{font-weight:700;font-size:18px;color:#fff}
+    .nav .right{display:flex;align-items:center;gap:10px}
+    .btn{display:inline-block;padding:8px 12px;border-radius:12px;border:1px solid #2a355f;background:#162044;color:#e8eeff;cursor:pointer}
+    .btn:hover{background:#1b274f}
+    .btn.primary{background:var(--brand);color:#0b1020;border-color:transparent}
+    .btn.primary:hover{filter:brightness(1.1)}
+    .btn.danger{background:var(--danger);color:#210909;border-color:transparent}
+    .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#1e284a;color:var(--muted);font-size:12px}
+    .grid{display:grid;gap:12px}
+    .card{background:var(--panel);border:1px solid #1c2444;border-radius:16px;padding:16px}
+    .muted{color:var(--muted)}
+    form.inline{display:inline}
+    input,textarea,select{width:100%;padding:10px;border-radius:12px;border:1px solid #2a355f;background:#0e1530;color:#e8eeff}
+    label{display:block;margin:.5rem 0 .25rem 2px;color:#c4d0f4}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .spacer{height:12px}
+    footer{margin-top:40px;color:var(--muted);text-align:center}
+  </style>
 </head>
 <body>
-  <header style="display:flex;gap:16px;align-items:center">
-    <strong>🦁 Literary Lions</strong>
-    <a href="/">Home</a>
-
-    {{if .User}}
-      <a href="/posts/new">New Post</a>
-      <!-- logout is POST for safety -->
-      <form method="post" action="/logout" style="margin-left:auto">
-        <button>Logout ({{.User.Username}})</button>
-      </form>
-    {{else}}
-      <span style="margin-left:auto">
-        <a href="/login">Login</a> · <a href="/register">Register</a>
-      </span>
-    {{end}}
+  <header>
+    <div class="container nav">
+      <div class="left row">
+        <a class="brand" href="/">🦁 Literary Lions</a>
+        <a class="btn" href="/">Home</a>
+        <a class="btn" href="/?mine=1">My Posts</a>
+        <a class="btn" href="/?liked=1">Liked</a>
+        <a class="btn" href="/posts/new">New Post</a>
+      </div>
+      <div class="right">
+        {{if .User}}
+          <span class="badge">Hello, {{.User.Username}}</span>
+          <form class="inline" action="/logout" method="post">
+            <button class="btn danger" type="submit">Log out</button>
+          </form>
+        {{else}}
+          <a class="btn" href="/login">Log in</a>
+          <a class="btn primary" href="/register">Sign up</a>
+        {{end}}
+      </div>
+    </div>
   </header>
 
-  <main>
+  <main class="container">
     {{block "content" .}}{{end}}
   </main>
+
+  <footer>
+    <div class="container muted">Built with Go · {{/* simple footer */}}</div>
+  </footer>
 </body>
 </html>
+{{end}}
