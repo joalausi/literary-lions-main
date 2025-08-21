@@ -144,6 +144,7 @@ func (a *App) renderError(w http.ResponseWriter, status int, msg string) {
 		return
 	}
 	http.Error(w, msg, status)
+}
 
 // Router returns the mux wrapped with a panic recovery that shows a 500 page.
 func (a *App) Router() http.Handler {
