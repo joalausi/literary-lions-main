@@ -19,7 +19,8 @@
       </div>
       <div class="right">
         {{if .User}}
-          <span class="badge">Hello, {{.User.Username}}</span>
+          <a class="btn" href="/u/{{.User.Username}}">My profile</a>
+          <a class="btn" href="/me/settings">Settings</a>
           <form class="inline" action="/logout" method="post">
             <button class="btn danger" type="submit">Log out</button>
           </form>

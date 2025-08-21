@@ -1,0 +1,35 @@
+{{define "profile.html"}}
+{{template "base.html" .}}
+{{end}}
+
+{{define "content"}}
+  <div class="card">
+    <div class="row" style="align-items:center;gap:16px">
+      {{if .Profile.AvatarPath}}<img class="avatar-lg" src="{{.Profile.AvatarPath}}" alt="avatar">{{else}}<div class="avatar-lg" style="background:#1e284a"></div>{{end}}
+      <div>
+        <h1 class="h2">{{if .Profile.DisplayName}}{{.Profile.DisplayName}}{{else}}{{.Profile.Username}}{{end}}</h1>
+        <div class="muted">@{{.Profile.Username}}</div>
+        {{if .Profile.Bio}}<p>{{.Profile.Bio}}</p>{{end}}
+        <div class="row" style="gap:8px">
+          <span class="badge">Posts: {{index .Counts "Posts"}}</span>
+          <span class="badge">Comments: {{index .Counts "Comments"}}</span>
+          <span class="badge">Likes: {{index .Counts "Likes"}}</span>
+        </div>
+        {{if .IsOwner}}
+          <div class="spacer"></div>
+          <a class="btn" href="/me/settings">Edit profile</a>
+        {{end}}
+      </div>
+    </div>
+    <div class="tabs" style="margin-top:16px">
+      <a class="tab {{if eq .Tab "posts"}}active{{end}}" href="/u/{{.Profile.Username}}/posts">Posts</a>
+      <a class="tab {{if eq .Tab "comments"}}active{{end}}" href="/u/{{.Profile.Username}}/comments">Comments</a>
+    </div>
+  </div>
+  <div class="spacer"></div>
+  {{if eq .Tab "posts"}}
+    {{template "profile_posts.html" .}}
+  {{else}}
+    {{template "profile_comments.html" .}}
+  {{end}}
+{{end}}
