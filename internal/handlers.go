@@ -7,6 +7,12 @@ import (
 	"strings"
 )
 
+func (a *App) render(w http.ResponseWriter, tmpl string, data any) {
+	if err := a.tpl.ExecuteTemplate(w, tmpl, data); err != nil {
+		a.renderError(w, http.StatusInternalServerError, "template error")
+	}
+}
+
 // Home — GET /
 // Filters: ?cat=<id>, ?mine=1, ?liked=1
 func (a *App) Home(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +120,7 @@ LIMIT 100
 		"FilterMine":  mine,
 		"FilterLiked": liked,
 	}
-	if err := a.tpl.ExecuteTemplate(w, "base.html", data); err != nil {
+	if err := a.tpl.ExecuteTemplate(w, "index.html", data); err != nil {
 		http.Error(w, "template error: "+err.Error(), http.StatusInternalServerError)
 		return
 	}

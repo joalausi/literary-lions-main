@@ -1,22 +1,27 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>New Post - Literary Lions</title>
-  <link rel="stylesheet" href="/assets/style.css">
-</head>
-<body>
-<header>🦁 Literary Lions — <a href="/">Home</a></header>
-<main>
-  <h1>Create a Post</h1>
-  <form method="post" action="/posts/new">
-    <label>Title<br><input type="text" name="title" required></label><br><br>
-    <label>Content<br><textarea name="content" rows="8" cols="60" required></textarea></label><br><br>
-    <label>Categories (comma-separated)<br>
-      <input type="text" name="categories" placeholder="Fantasy, Sci-Fi">
-    </label><br><br>
-    <button type="submit">Publish</button>
-  </form>
-</main>
-</body>
-</html>
+{{ define "new_post.html" }}{{ template "base.html" . }}{{ end }}
+
+{{ define "title" }}Create a Post — Literary Lions{{ end }}
+
+{{ define "content" }}
+  <div class="card" style="max-width:720px;margin:0 auto">
+    <h1>Create a Post</h1>
+    <form method="post" action="/posts/new" class="grid">
+      <div>
+        <label for="title">Title</label>
+        <input id="title" type="text" name="title" required>
+      </div>
+      <div>
+        <label for="content">Content</label>
+        <textarea id="content" name="content" required></textarea>
+      </div>
+      <div>
+        <label for="categories">Categories (comma-separated)</label>
+        <input id="categories" type="text" name="categories" placeholder="Fantasy, Sci-Fi">
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" type="submit">Publish</button>
+        <a class="btn" href="/">Cancel</a>
+      </div>
+    </form>
+  </div>
+{{ end }}
