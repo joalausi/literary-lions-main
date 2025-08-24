@@ -16,6 +16,9 @@ type User struct {
 	ID       int64
 	Email    string
 	Username string
+	DisplayName string
+	Bio         string
+	AvatarPath  string
 }
 
 // hash a plaintext password
@@ -76,11 +79,11 @@ func (a *App) currentUser(r *http.Request) (*User, error) {
 	var u User
 	var expiresUnix int64
 	err = a.db.QueryRow(`
-		SELECT u.id, u.email, u.username, s.expires_at
-		FROM sessions s
-		JOIN users u ON u.id = s.user_id
-		WHERE s.token = ?`, c.Value).
-		Scan(&u.ID, &u.Email, &u.Username, &expiresUnix)
+		SELECT u.id, u.email, u.username, COALESCE(u.display_name,''), COALESCE(u.bio,''), COALESCE(u.avatar_path,''), s.expires_at
+                FROM sessions s
+                JOIN users u ON u.id = s.user_id
+                WHERE s.token = ?`, c.Value).
+		Scan(&u.ID, &u.Email, &u.Username, &u.DisplayName, &u.Bio, &u.AvatarPath, &expiresUnix)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}

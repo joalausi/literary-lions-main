@@ -1,0 +1,21 @@
+{{define "profile_comments.html"}}
+  {{if .Comments}}
+    <div class="grid">
+      {{range .Comments}}
+        <article class="card">
+          <div>
+            <div><a href="/post?id={{.PostID}}">{{.PostTitle}}</a></div>
+            <div class="muted">{{.CreatedAt}}</div>
+            <p style="white-space:pre-wrap">{{.Content}}</p>
+          </div>
+        </article>
+      {{end}}
+    </div>
+  {{else}}
+    <div class="card">No comments yet.</div>
+  {{end}}
+  <div class="row" style="margin-top:16px;gap:8px">
+    {{if .Meta.HasPrev}}<a class="btn" href="{{.Meta.PrevURL}}">Prev</a>{{end}}
+    {{if .Meta.HasNext}}<a class="btn" href="{{.Meta.NextURL}}">Next</a>{{end}}
+  </div>
+{{end}}

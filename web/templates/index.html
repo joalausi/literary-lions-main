@@ -31,7 +31,10 @@
         <article class="card">
           <header class="row" style="justify-content:space-between">
             <h2 style="margin:0"><a href="/post?id={{.ID}}">{{.Title}}</a></h2>
-            <span class="muted">{{.CreatedAt}} · by {{.Username}}</span>
+            <span class="muted row" style="gap:6px">
+              {{if .AvatarPath}}<img class="avatar-sm" src="{{.AvatarPath}}" alt="av">{{end}}
+              <a href="/u/{{.Username}}">{{.Username}}</a> · {{.CreatedAt}}
+            </span>
           </header>
           {{if .Cats}}
             <div class="muted">Categories: {{.Cats}}</div>

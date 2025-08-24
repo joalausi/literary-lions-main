@@ -1,5 +1,11 @@
 # Literary Lions – ERD
 
+## Entity Relationship Diagram
+
+![Database Schema](erd-diagram.png)
+
+## Mermaid Source Code
+
 ```mermaid
 erDiagram
   USERS ||--o{ SESSIONS : has
@@ -61,3 +67,4 @@ erDiagram
     integer value "1 or -1"
     PK "user_id, comment_id"
   }
+  ```

@@ -1,11 +1,30 @@
 package app
 
 import (
+	"bytes"
 	"database/sql"
+	"fmt"
+	"html/template"
+	"image"
+	"image/jpeg"
+	_ "image/png"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
+func (a *App) render(w http.ResponseWriter, tmpl string, data any) {
+	t, ok := a.tpl[tmpl]
+	if !ok {
+		a.renderError(w, http.StatusInternalServerError, "template not found")
+		return
+	}
+	if err := t.ExecuteTemplate(w, tmpl, data); err != nil {
+		a.renderError(w, http.StatusInternalServerError, "template error")
+	}
+}
 
 // Home — GET /
 // Filters: ?cat=<id>, ?mine=1, ?liked=1
@@ -40,7 +59,7 @@ func (a *App) Home(w http.ResponseWriter, r *http.Request) {
 
 	// base query — matches what worked in DB Browser
 	q := `
-SELECT p.id, p.title, u.username, p.created_at,
+SELECT p.id, p.title, u.username, COALESCE(u.avatar_path,''), p.created_at,
        COALESCE(GROUP_CONCAT(c.name, ', '), '') AS cats
 FROM posts p
 JOIN users u ON u.id = p.user_id
@@ -87,6 +106,7 @@ LIMIT 100
 		ID        int64
 		Title     string
 		Username  string
+		AvatarPath string
 		CreatedAt string
 		Cats      string
 	}
@@ -100,7 +120,7 @@ LIMIT 100
 	var posts []postItem
 	for rows.Next() {
 		var it postItem
-		if err := rows.Scan(&it.ID, &it.Title, &it.Username, &it.CreatedAt, &it.Cats); err == nil {
+		if err := rows.Scan(&it.ID, &it.Title, &it.Username, &it.AvatarPath, &it.CreatedAt, &it.Cats); err == nil {
 			posts = append(posts, it)
 		}
 	}
@@ -114,10 +134,11 @@ LIMIT 100
 		"FilterMine":  mine,
 		"FilterLiked": liked,
 	}
-	if err := a.tpl.ExecuteTemplate(w, "base.html", data); err != nil {
-		http.Error(w, "template error: "+err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// if err := a.tpl.ExecuteTemplate(w, "index.html", data); err != nil {
+	// 	http.Error(w, "template error: "+err.Error(), http.StatusInternalServerError)
+	// 	return
+	// }
+	a.render(w, "index.html", data)
 }
 
 // Health — GET /health
@@ -146,9 +167,10 @@ func (a *App) RegisterGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	if err := a.tpl.ExecuteTemplate(w, "register.html", nil); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	// if err := a.tpl.ExecuteTemplate(w, "register.html", nil); err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// }
+	a.render(w, "register.html", nil)
 }
 
 // RegisterPOST — POST /register
@@ -202,16 +224,18 @@ func (a *App) LoginGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	if err := a.tpl.ExecuteTemplate(w, "login.html", nil); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	// if err := a.tpl.ExecuteTemplate(w, "login.html", nil); err != nil {
+	// 	http.Error(w, err.Error(), http.StatusInternalServerError)
+	// }
+	
+	a.render(w, "login.html", nil)
 }
 
 // LoginPOST — POST /login
 // Verifies credentials and starts a session; shows error on the page if invalid.
 func (a *App) LoginPOST(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		_ = a.tpl.ExecuteTemplate(w, "login.html", map[string]any{"Error": "Bad form"})
+		a.render(w, "login.html", map[string]any{"Error": "Bad form"})
 		return
 	}
 	email := strings.TrimSpace(r.Form.Get("email"))
@@ -223,21 +247,21 @@ func (a *App) LoginPOST(w http.ResponseWriter, r *http.Request) {
 	err := a.db.QueryRow(`SELECT id, username, password_hash FROM users WHERE email = ?`, email).
 		Scan(&id, &username, &hash)
 	if err == sql.ErrNoRows {
-		_ = a.tpl.ExecuteTemplate(w, "login.html", map[string]any{"Error": "Invalid email or password"})
+		a.render(w, "login.html", map[string]any{"Error": "Invalid email or password"})
 		return
 	}
 	if err != nil {
-		_ = a.tpl.ExecuteTemplate(w, "login.html", map[string]any{"Error": "Database error"})
+		a.render(w, "login.html", map[string]any{"Error": "Database error"})
 		return
 	}
 	if err := checkPassword(hash, pw); err != nil {
-		_ = a.tpl.ExecuteTemplate(w, "login.html", map[string]any{"Error": "Invalid email or password"})
+		a.render(w, "login.html", map[string]any{"Error": "Invalid email or password"})
 		return
 	}
 
 	token, exp, err := createSession(a.db, id)
 	if err != nil {
-		_ = a.tpl.ExecuteTemplate(w, "login.html", map[string]any{"Error": "Session error"})
+		a.render(w, "login.html", map[string]any{"Error": "Session error"})
 		return
 	}
 	setSessionCookie(w, token, exp)
@@ -264,9 +288,7 @@ func (a *App) NewPostGET(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data := map[string]any{"Title": "New Post", "User": u}
-	if err := a.tpl.ExecuteTemplate(w, "new_post.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	a.render(w, "new_post.html", data)
 }
 
 // NewPostPOST — POST /posts/new
@@ -337,14 +359,15 @@ func (a *App) PostViewGET(w http.ResponseWriter, r *http.Request) {
 		Title     string
 		Content   string
 		Username  string
+		AvatarPath string
 		CreatedAt string
 	}
 	err = a.db.QueryRow(`
-		SELECT p.id, p.title, p.content, u.username, p.created_at
+		SELECT p.id, p.title, p.content, u.username, u.avatar_path, p.created_at
 		FROM posts p
 		JOIN users u ON u.id = p.user_id
 		WHERE p.id = ?`, id).
-		Scan(&post.ID, &post.Title, &post.Content, &post.Username, &post.CreatedAt)
+		Scan(&post.ID, &post.Title, &post.Content, &post.Username, &post.AvatarPath, &post.CreatedAt)
 	if err == sql.ErrNoRows {
 		a.renderError(w, http.StatusNotFound, "Post not found.")
 		return
@@ -383,6 +406,7 @@ func (a *App) PostViewGET(w http.ResponseWriter, r *http.Request) {
 	type commentItem struct {
 		ID        int64
 		Username  string
+		AvatarPath string
 		Content   string
 		CreatedAt string
 		Likes     int
@@ -390,7 +414,7 @@ func (a *App) PostViewGET(w http.ResponseWriter, r *http.Request) {
 	}
 	var comments []commentItem
 	cr, err := a.db.Query(`
-		SELECT c.id, u.username, c.content, c.created_at
+		SELECT c.id, u.username, COALESCE(u.avatar_path,''), c.content, c.created_at
 		FROM comments c
 		JOIN users u ON u.id = c.user_id
 		WHERE c.post_id = ?
@@ -402,7 +426,7 @@ func (a *App) PostViewGET(w http.ResponseWriter, r *http.Request) {
 	defer cr.Close()
 	for cr.Next() {
 		var cmt commentItem
-		if err := cr.Scan(&cmt.ID, &cmt.Username, &cmt.Content, &cmt.CreatedAt); err == nil {
+		if err := cr.Scan(&cmt.ID, &cmt.Username, &cmt.AvatarPath, &cmt.Content, &cmt.CreatedAt); err == nil {
 			_ = a.db.QueryRow(`
 				SELECT
 				  COALESCE(SUM(CASE WHEN value=1 THEN 1 END),0),
@@ -422,9 +446,7 @@ func (a *App) PostViewGET(w http.ResponseWriter, r *http.Request) {
 		"PostDislikes":   postDislikes,
 		"Comments":       comments,
 	}
-	if err := a.tpl.ExecuteTemplate(w, "post.html", data); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
+	a.render(w, "post.html", data)
 }
 
 // CommentPOST — POST /comment
@@ -522,4 +544,241 @@ func (a *App) ReactPOST(w http.ResponseWriter, r *http.Request) {
 		ref = "/"
 	}
 	http.Redirect(w, r, ref, http.StatusSeeOther)
+}
+// ProfileRouter handles /u/{username}, /u/{username}/posts, /u/{username}/comments
+func (a *App) ProfileRouter(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/u/")
+	parts := strings.Split(strings.Trim(path, "/"), "/")
+	if len(parts) == 0 || parts[0] == "" {
+		a.renderError(w, http.StatusNotFound, "User not found")
+		return
+	}
+	username := parts[0]
+	tab := "posts"
+	if len(parts) > 1 && parts[1] == "comments" {
+		tab = "comments"
+	}
+
+	viewer, _ := a.currentUser(r)
+	prof, err := GetUserByUsername(a.db, username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			a.renderError(w, http.StatusNotFound, "User not found")
+		} else {
+			a.renderError(w, http.StatusInternalServerError, "Database error")
+		}
+		return
+	}
+
+	// counts
+	postsCount, _ := CountUserPosts(a.db, prof.ID)
+	commentsCount, _ := CountUserComments(a.db, prof.ID)
+	likesCount, _ := CountUserPostLikes(a.db, prof.ID)
+
+	page := 1
+	limit := 10
+	if v := r.URL.Query().Get("page"); v != "" {
+		if p, err := strconv.Atoi(v); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if l, err := strconv.Atoi(v); err == nil && l > 0 && l <= 50 {
+			limit = l
+		}
+	}
+	offset := (page - 1) * limit
+
+	type meta struct {
+		Page    int
+		Limit   int
+		Total   int
+		HasPrev bool
+		HasNext bool
+		PrevURL string
+		NextURL string
+	}
+	m := meta{Page: page, Limit: limit}
+
+	data := map[string]any{
+		"Title":   prof.Username + " - Profile",
+		"User":    viewer,
+		"Profile": prof,
+		"Counts":  map[string]int{"Posts": postsCount, "Comments": commentsCount, "Likes": likesCount},
+		"Tab":     tab,
+		"Meta":    &m,
+		"IsOwner": viewer != nil && viewer.ID == prof.ID,
+	}
+
+	if tab == "comments" {
+		comments, total, _ := ListCommentsByAuthor(a.db, prof.ID, offset, limit)
+		m.Total = total
+		m.HasPrev = page > 1
+		m.HasNext = total > page*limit
+		if m.HasPrev {
+			m.PrevURL = fmt.Sprintf("/u/%s/comments?page=%d", prof.Username, page-1)
+		}
+		if m.HasNext {
+			m.NextURL = fmt.Sprintf("/u/%s/comments?page=%d", prof.Username, page+1)
+		}
+		data["Comments"] = comments
+	} else {
+		posts, total, _ := ListPostsByAuthor(a.db, prof.ID, offset, limit)
+		m.Total = total
+		m.HasPrev = page > 1
+		m.HasNext = total > page*limit
+		if m.HasPrev {
+			m.PrevURL = fmt.Sprintf("/u/%s/posts?page=%d", prof.Username, page-1)
+		}
+		if m.HasNext {
+			m.NextURL = fmt.Sprintf("/u/%s/posts?page=%d", prof.Username, page+1)
+		}
+		data["Posts"] = posts
+	}
+
+	tpl, err := template.ParseFiles(
+		"web/templates/base.html",
+		"web/templates/profile.html",
+		"web/templates/profile_posts.html",
+		"web/templates/profile_comments.html",
+	)
+	if err != nil {
+		http.Error(w, "template error", http.StatusInternalServerError)
+		return
+	}
+	if err := tpl.ExecuteTemplate(w, "profile.html", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// MeSettingsGET renders the profile settings form.
+func (a *App) MeSettingsGET(w http.ResponseWriter, r *http.Request) {
+	u, _ := a.currentUser(r)
+	if u == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	csrf := a.generateCSRF(r)
+	data := map[string]any{
+		"Title":     "Settings",
+		"User":      u,
+		"CSRFToken": csrf,
+	}
+	tpl, err := template.ParseFiles("web/templates/base.html", "web/templates/me_settings.html")
+	if err != nil {
+		http.Error(w, "template error", http.StatusInternalServerError)
+		return
+	}
+	if err := tpl.ExecuteTemplate(w, "me_settings.html", data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// MeSettingsPOST updates display name and bio.
+func (a *App) MeSettingsPOST(w http.ResponseWriter, r *http.Request) {
+	u, _ := a.currentUser(r)
+	if u == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	if err := r.ParseForm(); err != nil || !a.checkCSRF(r) {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	dn := strings.TrimSpace(r.Form.Get("display_name"))
+	bio := strings.TrimSpace(r.Form.Get("bio"))
+	if len(dn) == 0 || len(dn) > 50 || len(bio) > 280 {
+		http.Error(w, "validation error", http.StatusBadRequest)
+		return
+	}
+	if err := UpdateUserProfile(a.db, u.ID, dn, bio); err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/u/"+u.Username, http.StatusSeeOther)
+}
+
+// MeAvatarPOST uploads a new avatar for the current user.
+func (a *App) MeAvatarPOST(w http.ResponseWriter, r *http.Request) {
+	u, _ := a.currentUser(r)
+	if u == nil {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+	if err := r.ParseMultipartForm(2<<20 + 1024); err != nil || !a.checkCSRF(r) {
+		http.Error(w, "bad form", http.StatusBadRequest)
+		return
+	}
+	f, hdr, err := r.FormFile("avatar")
+	if err != nil {
+		http.Error(w, "file error", http.StatusBadRequest)
+		return
+	}
+	defer f.Close()
+
+	if hdr.Size > 2<<20 {
+		http.Error(w, "file too large", http.StatusBadRequest)
+		return
+	}
+
+	// read first bytes for mime detection
+	var buf bytes.Buffer
+	tee := io.TeeReader(f, &buf)
+	head := make([]byte, 512)
+	if _, err := tee.Read(head); err != nil && err != io.EOF {
+		http.Error(w, "read error", http.StatusBadRequest)
+		return
+	}
+	mime := http.DetectContentType(head)
+	if mime != "image/jpeg" && mime != "image/png" {
+		http.Error(w, "invalid mime", http.StatusBadRequest)
+		return
+	}
+	img, _, err := image.Decode(io.MultiReader(bytes.NewReader(head), &buf, f))
+	if err != nil {
+		http.Error(w, "decode error", http.StatusBadRequest)
+		return
+	}
+	img = resizeTo256(img)
+
+	dir := "web/uploads/avatars"
+	_ = os.MkdirAll(dir, 0755)
+	path := filepath.Join(dir, fmt.Sprintf("%d.jpg", u.ID))
+	out, err := os.Create(path)
+	if err != nil {
+		http.Error(w, "save error", http.StatusInternalServerError)
+		return
+	}
+	defer out.Close()
+	if err := jpeg.Encode(out, img, &jpeg.Options{Quality: 90}); err != nil {
+		http.Error(w, "encode error", http.StatusInternalServerError)
+		return
+	}
+	webPath := "/uploads/avatars/" + fmt.Sprintf("%d.jpg", u.ID)
+	if err := UpdateUserAvatar(a.db, u.ID, webPath); err != nil {
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+	http.Redirect(w, r, "/u/"+u.Username, http.StatusSeeOther)
+}
+
+// resizeTo256 crops the image to a square and scales to 256x256 using a simple
+// nearest-neighbor algorithm.
+func resizeTo256(img image.Image) image.Image {
+	b := img.Bounds()
+	size := b.Dx()
+	if b.Dy() < size {
+		size = b.Dy()
+	}
+	startX := b.Min.X + (b.Dx()-size)/2
+	startY := b.Min.Y + (b.Dy()-size)/2
+	out := image.NewRGBA(image.Rect(0, 0, 256, 256))
+	for y := 0; y < 256; y++ {
+		for x := 0; x < 256; x++ {
+			sx := startX + x*size/256
+			sy := startY + y*size/256
+			out.Set(x, y, img.At(sx, sy))
+		}
+	}
+	return out
 }

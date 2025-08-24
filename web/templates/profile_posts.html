@@ -1,0 +1,20 @@
+{{define "profile_posts.html"}}
+  {{if .Posts}}
+    <div class="grid">
+      {{range .Posts}}
+        <article class="card">
+          <header class="row" style="justify-content:space-between">
+            <h2 class="h2" style="margin:0"><a href="/post?id={{.ID}}">{{.Title}}</a></h2>
+            <span class="muted">{{.CreatedAt}}</span>
+          </header>
+        </article>
+      {{end}}
+    </div>
+  {{else}}
+    <div class="card">No posts yet.</div>
+  {{end}}
+  <div class="row" style="margin-top:16px;gap:8px">
+    {{if .Meta.HasPrev}}<a class="btn" href="{{.Meta.PrevURL}}">Prev</a>{{end}}
+    {{if .Meta.HasNext}}<a class="btn" href="{{.Meta.NextURL}}">Next</a>{{end}}
+  </div>
+{{end}}

@@ -4,6 +4,8 @@
 /dist/
 /tmp/
 *.log
+web/uploads/avatars/*
+!web/uploads/avatars/.gitkeep
 
 # editors
 .vscode/
