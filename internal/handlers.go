@@ -188,6 +188,11 @@ func (a *App) RegisterPOST(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missing fields", http.StatusBadRequest)
 		return
 	}
+	
+	if !validPassword(pw) {
+		a.render(w, "register.html", map[string]any{"Error": "Password must contain at least 6 unique characters"})
+		return
+	}
 
 	// Hash the password and insert the user.
 	hash, err := hashPassword(pw)

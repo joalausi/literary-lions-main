@@ -31,6 +31,15 @@ func checkPassword(hash []byte, pw string) error {
 	return bcrypt.CompareHashAndPassword(hash, []byte(pw))
 }
 
+// validPassword reports whether pw contains at least 6 unique characters.
+func validPassword(pw string) bool {
+	chars := make(map[rune]struct{})
+	for _, r := range pw {
+		chars[r] = struct{}{}
+	}
+	return len(chars) >= 6
+}
+
 // create a session row + return token and expiry
 func createSession(db *sql.DB, userID int64) (token string, expires time.Time, err error) {
 	token = uuid.NewString()
